@@ -1,5 +1,9 @@
 A Firefox extension that automatically solves some puzzle games. The status of each site/game is listed below. The manifest may need to be modified / ammended slightly to work with other browsers, but the code should transfer without issue; unless you are using an absurdly old version.
 
+www.puzzle-binairo.com/ (binairo.js)
+---
+Successfully completes all 'easy' puzzles.
+
 www.puzzle-minesweeper.com/minesweeper (minesweeper.js)
 ---
 Successfully solves all 'easy' minesweeper puzzles. The minesweeper puzzles on this site are unambiguous, in that all information necessary to solve them is presented to the user from the beginning.
