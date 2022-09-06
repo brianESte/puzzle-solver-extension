@@ -2,7 +2,41 @@
 // a variation of minesweeper apparently
 // designed to work on the page: https://www.puzzle-minesweeper.com/mosaic-*
 
-// TODO: imrove solve time, possibly by having an array of flags for the completion of each row...
+// TODO: improve solve time, possibly by having an array of flags for the completion of each row...
+
+document.addEventListener("DOMContentLoaded", () => {
+  // wait for the board to be ready
+  waitForElm(".mosaic-cell-back").then((elm) => {
+    // console.log(elm.textContent);
+    play_game();
+  });
+});
+
+// Credit to Yong Wang (https://stackoverflow.com/a/61511955) for the base of this function
+function waitForElm(selector) {
+  return new Promise(resolve => {
+    if (document.querySelector(selector)) {
+        return resolve(document.querySelector(selector));
+    }
+
+    // Create an observer instance linked to the callback function
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if(node.nodeType != 1)  return;
+          // if the node matches the selector, resolve the promise and return from callback
+          if(node.matches(selector)){
+            resolve(document.querySelector(selector));
+            observer.disconnect();
+            return;
+          }
+        })
+      });
+    });
+
+    observer.observe(document.body, {childList: true, subtree: true});
+  });
+}
 
 function play_game() {
   let btn_Done = document.getElementById("btnReady");
@@ -11,7 +45,7 @@ function play_game() {
   // var stop_tmr = document.getElementsByName("stopClock")[0];
   // stop_tmr.value = 1;
   // set robot to true
-  // document.getElementById("robot").value = 1;
+  document.getElementById("robot").value = 1;
 
   // game dimensions from url:
   let game_type = document.URL.substring(42)
@@ -136,5 +170,3 @@ function solve_mosaic_easy(field) {
   }
   return field;
 }
-
-play_game();

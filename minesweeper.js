@@ -1,6 +1,40 @@
 // minesweeper.js
 // designed to work on the page: https://www.puzzle-minesweeper.com/minesweeper-*
 
+document.addEventListener("DOMContentLoaded", () => {
+  // wait for the board to be ready
+  waitForElm(".minesweeper-cell-back").then((elm) => {
+    // console.log(elm.textContent);
+    play_game();
+  });
+});
+
+// Credit to Yong Wang (https://stackoverflow.com/a/61511955) for the base of this function
+function waitForElm(selector) {
+  return new Promise(resolve => {
+    if (document.querySelector(selector)) {
+      return resolve(document.querySelector(selector));
+    }
+
+    // Create an observer instance linked to the callback function
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if(node.nodeType != 1)  return;
+          // if the node matches the selector, resolve the promise and return from callback
+          if(node.matches(selector)){
+            resolve(document.querySelector(selector));
+            observer.disconnect();
+            return;
+          }
+        })
+      });
+    });
+
+    observer.observe(document.body, {childList: true, subtree: true});
+  });
+}
+
 function play_game(){
   let btn_Done = document.getElementById("btnReady");
   if(btn_Done === null || document.getElementsByClassName("err").length)  return;
@@ -8,7 +42,7 @@ function play_game(){
   // var stop_tmr = document.getElementsByName("stopClock")[0];
   // stop_tmr.value = 1;
   // set robot to true
-  // document.getElementById("robot").value = 1;
+  document.getElementById("robot").value = 1;
 
   // game dimensions from url:
   let game_type = document.URL.substring(47)
@@ -16,8 +50,8 @@ function play_game(){
 
   var field = new Array(H);
   for (let r_i = 0; r_i < H; r_i++){
-      field[r_i] = new Array(W);
-      field[r_i].fill(0);
+    field[r_i] = new Array(W);
+    field[r_i].fill(0);
   }
 
   // var cell_nums = $('div.number');
@@ -45,22 +79,22 @@ function play_game(){
   const delta_y = (game_box.height - 10) / H;
 
   for( let r_i = 0; r_i < H; r_i++){
-      for( let c_i = 0; c_i < W; c_i++){
-          if( field[r_i][c_i] == 'x'){
-              let evt_opts = {
-                  bubbles: true,
-                  button: 2,
-                  // cancelable: false,
-                  clientX: game_box.x + 5 + (c_i + 0.5) * delta_x,
-                  clientY: game_box.y + 5 + (r_i + 0.5) * delta_y,
-                  // pointerType: "mouse",
-                  // view: window,
-              }
-  
-              game_brd.dispatchEvent(new MouseEvent("mousedown", evt_opts));
-              game_brd.dispatchEvent(new MouseEvent("mouseup", evt_opts));
-          }
+    for( let c_i = 0; c_i < W; c_i++){
+      if( field[r_i][c_i] == 'x'){
+        let evt_opts = {
+          bubbles: true,
+          button: 2,
+          // cancelable: false,
+          clientX: game_box.x + 5 + (c_i + 0.5) * delta_x,
+          clientY: game_box.y + 5 + (r_i + 0.5) * delta_y,
+          // pointerType: "mouse",
+          // view: window,
+        }
+
+        game_brd.dispatchEvent(new MouseEvent("mousedown", evt_opts));
+        game_brd.dispatchEvent(new MouseEvent("mouseup", evt_opts));
       }
+    }
   }
   
   // btn_Done.dispatchEvent(new MouseEvent("mousedown", {bubbles: true, clientX: 800, clientY: 364}));
@@ -131,5 +165,3 @@ function solve_minesweeper_easy(field){
 
   return field;
 }
-
-play_game();
