@@ -33,16 +33,16 @@ Successfully solves all 'easy' minesweeper puzzles. The minesweeper puzzles on t
 
 Size  | Difficulty | Time [s]
 ------|------------|-----
-5x5   | Easy       | 0.510
-5x5   | Hard       | ??
-7x7   | Easy       | 0.533
-7x7   | Hard       | ??
-10x10 | Easy       | 0.573
-10x10 | Hard       | ??
-15x15 | Easy       | 0.631
-15x15 | Hard       | ??
-20x20 | Easy       | 0.921
-20x20 | Hard       | ??
+5x5   | Easy       | 0.387
+5x5   | Hard       | 0.412
+7x7   | Easy       | 0.387
+7x7   | Hard       | 0.407
+10x10 | Easy       | 0.420
+10x10 | Hard       | 0.429
+15x15 | Easy       | 0.550
+15x15 | Hard       | 0.580
+20x20 | Easy       | 0.747
+20x20 | Hard       | 0.763
 
 ---
 
@@ -72,3 +72,7 @@ www.puzzle-nonograms.com (nonograms.js)
 www.puzzle-skyscrapers.com (skyscrapers.js)
 ---
 Basically only a stub. 
+
+www.puzzle-tents.com (tents.js)
+---
+Currently a stub.
