@@ -5,6 +5,7 @@
 	"version": "0.1",
 	"content_scripts": [
 		{"matches": [ "https://www.puzzle-binairo.com/*"], "js": ["binairo.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-kakurasu.com/*"], "js": ["kakurasu.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-minesweeper.com/minesweeper*/"], "js": ["minesweeper.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-minesweeper.com/mosaic-*/"], "js": ["mosaic.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-nonograms.com/*", "https://nonogramsonline.com/*" ], "js": ["nonograms.js"]},

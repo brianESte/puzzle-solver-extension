@@ -12,8 +12,8 @@ www.puzzle-binairo.com/ (binairo.js)
 ---
 Successfully completes all 'easy' puzzles.
 
-Size  | Difficulty | Time [s]
-------|------------|-----
+Size  | Difficulty | Solve Time [s]
+------|------------|---------------
 6x6   | Easy       | 0.417
 6x6   | Hard       | ??
 8x8   | Easy       | 0.514
@@ -27,12 +27,33 @@ Size  | Difficulty | Time [s]
 
 ---
 
+www.puzzle-kakurasu.com/ (kakurasu.js)
+---
+Currently only solves the 4x4 puzzles, because the base options list is static... 
+
+Size  | Difficulty | Solve Time [s]
+------|------------|---------------
+4x4   | Easy       | 0.496
+4x4   | Hard       | 0.489
+5x5   | Easy       | 0.491
+5x5   | Hard       | 0.513
+6x6   | Easy       | 0.472
+6x6   | Hard       | 0.521
+7x7   | Easy       | 0.502
+7x7   | Hard       | 0.481
+8x8   | Easy       | 0.517
+8x8   | Hard       | 0.557
+9x9   | Easy       | 0.527
+9x9   | Hard       | 0.567
+
+---
+
 www.puzzle-minesweeper.com/minesweeper (minesweeper.js)
 ---
 Successfully solves all 'easy' minesweeper puzzles. The minesweeper puzzles on this site are unambiguous, in that all information necessary to solve them is presented to the user from the beginning.
 
-Size  | Difficulty | Time [s]
-------|------------|-----
+Size  | Difficulty | Solve Time [s]
+------|------------|---------------
 5x5   | Easy       | 0.387
 5x5   | Hard       | 0.412
 7x7   | Easy       | 0.387
@@ -50,18 +71,18 @@ www.puzzle-minesweeper.com/mosaic (mosaic.js)
 ---
 Successfully solves all 'easy' mosaic puzzles.
 
-Size  | Difficulty | Time [s]
-------|------------|-----
-5x5   | Easy       | 0.553
-5x5   | Hard       | ??
-7x7   | Easy       | 0.580
-7x7   | Hard       | ??
-10x10 | Easy       | 0.589
-10x10 | Hard       | ??
-15x15 | Easy       | 0.884
-15x15 | Hard       | ??
-20x20 | Easy       | 1.344
-20x20 | Hard       | ??
+Size  | Difficulty | Solve Time [s]
+------|------------|---------------
+5x5   | Easy       | 0.445
+5x5   | Hard       | 0.541
+7x7   | Easy       | 0.520
+7x7   | Hard       | 0.585
+10x10 | Easy       | 0.600
+10x10 | Hard       | 0.660
+15x15 | Easy       | 0.832
+15x15 | Hard       | 0.803
+20x20 | Easy       | 1.298
+20x20 | Hard       | 1.364
 
 ---
 
