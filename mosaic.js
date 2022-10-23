@@ -2,8 +2,6 @@
 // a variation of minesweeper apparently
 // designed to work on the page: https://www.puzzle-minesweeper.com/mosaic-*
 
-// TODO: improve solve time, possibly by having an array of flags for the completion of each row...
-
 document.addEventListener("DOMContentLoaded", () => {
   // wait for the board to be ready
   waitForElm(".mosaic-cell-back").then((elm) => {
@@ -41,15 +39,16 @@ function waitForElm(selector) {
 function play_game() {
   let btn_Done = document.getElementById("btnReady");
   if (btn_Done === null || document.getElementsByClassName("err").length) return;
-  // diabling the timer is only superficial. 
+  // disabling the timer is only superficial. 
   // var stop_tmr = document.getElementsByName("stopClock")[0];
   // stop_tmr.value = 1;
 
   // game dimensions from url:
-  let game_type = document.URL.substring(42)
-  const [H, W] = game_type.split('-')[0].split('x').map(c => parseInt(c));
+  let game_mode = document.URL.substring(42)
+  const [H, W] = game_mode.split('-')[0].split('x').map(char => parseInt(char));
 
-  var field = new Array(H).fill().map(() => new Array(W));
+  var field = new Array(H);
+  for (let r_i = 0; r_i < H; r_i++) field[r_i] = new Array(W);
 
   var cell_nums = document.getElementsByClassName("number");
 
@@ -61,7 +60,7 @@ function play_game() {
       if (isNaN(val)) {
         field[r_i][c_i] = { clue: false, clear: false, filled: false };
       } else {
-        field[r_i][c_i] = { clue: true, clear: false, filled: false, done: false, val: val, n_filled_needed: val };
+        field[r_i][c_i] = { clue: true, clear: false, filled: false, done: false, val: val, fills_needed: val };
       }
     }
   }
@@ -71,27 +70,27 @@ function play_game() {
   for (let r_i = 0; r_i < H; r_i++) {
     for (let c_i = 0; c_i < W; c_i++) {
       // build list of cluster coordinates. (this code block could be moved into the above loop, but idk what benefit it would have)
-      let cluster_coords = [];
+      let cluster = [];
       for (let dy of cluster_range) {
         let y = r_i + dy;
         if (y >= H || y < 0) continue;
         for (let dx of cluster_range) {
           let x = c_i + dx;
           if (x >= W || x < 0) continue;
-          cluster_coords.push(`${y},${x}`);
+          cluster.push(field[y][x]);
         }
       }
 
       // if cell is a clue, add its cluster to the object
-      if (field[r_i][c_i].clue) field[r_i][c_i].cluster = cluster_coords;
+      if (field[r_i][c_i].clue) field[r_i][c_i].cluster = cluster;
 
       // all cells in Mosaic are settable, and thus need an array of clues_in_range
-      field[r_i][c_i].clues_in_range = cluster_coords.filter(coords => { coords = coords.split(','); return field[coords[0]][coords[1]].clue });
+      field[r_i][c_i].clues_in_range = cluster.filter(cell => cell.clue);
     }
   }
 
   // Check the difficulty, and call appropriate solver-function
-  if (game_type.endsWith('hard/')) {
+  if (game_mode.endsWith('hard/')) {
     field = solve_mosaic_hard(field);
   } else {
     field = solve_mosaic_easy(field);
@@ -142,18 +141,15 @@ function solve_mosaic_easy(field) {
 
   for (let r_i = 0; r_i < H; r_i++) {
     for (let c_i = 0; c_i < W; c_i++) {
-      if (field[r_i][c_i].clue) clue_cells.push([r_i, c_i]);
+      if (field[r_i][c_i].clue) clue_cells.push(field[r_i][c_i]);
     }
   }
 
   // let it_ctr = 0;
   // loop through each clue and check the 2 basic cases
-  while (!clue_cells.every(cell => field[cell[0]][cell[1]].done)) {
-    for (let clue_coords of clue_cells) {
-      let clue = field[clue_coords[0]][clue_coords[1]];
-      if (clue.done) continue;
-
-      perform_basic_pass(clue, field);
+  while (!clue_cells.every(cell => cell.done)) {
+    for (let clue_cell of clue_cells) {
+      if (!clue_cell.done) perform_basic_pass(clue_cell);
     }
 
     // if(it_ctr++ > 2*H){
@@ -181,62 +177,56 @@ function solve_mosaic_hard(field) {
   for (let r_i = 0; r_i < H; r_i++) {
     for (let c_i = 0; c_i < W; c_i++) {
       if (!field[r_i][c_i].clue) continue;
+      let clue_cell = field[r_i][c_i];
 
-      // create coordinate list of neighboring clues
-      let next_clue_coords = new Set();
-      for (let neighbor_coord of field[r_i][c_i].cluster) {
-        neighbor_coord = neighbor_coord.split(',');
-        let cell = field[neighbor_coord[0]][neighbor_coord[1]];
+      // create list of adjacent clue cells
+      let next_clues = new Set();
+      for (let adj_cell of clue_cell.cluster) {
         // in Mosaic, all cells are settable, loop through em
-        for (let clue of cell.clues_in_range) {
-          next_clue_coords.add(clue);
+        for (let clue of adj_cell.clues_in_range) {
+          next_clues.add(clue);
         }
       }
-      next_clue_coords.delete(`${r_i},${c_i}`);
+      next_clues.delete(clue_cell);
       // add the clue coordinates to the list of clue cells
-      clue_cells.push([r_i, c_i]);
+      clue_cells.push(clue_cell);
       // set the current cell to a clue object 
-      field[r_i][c_i].next_clue_coords = next_clue_coords;
+      clue_cell.next_clues = next_clues;
     }
   }
 
   // perform an initial basic pass
-  for (let clue_coords of clue_cells) perform_basic_pass(field[clue_coords[0]][clue_coords[1]], field);
+  for (let clue_cell of clue_cells) perform_basic_pass(clue_cell);
 
   // var it_ctr = 0;
   // now start looping through the clues..
-  while (!clue_cells.every(item => field[item[0]][item[1]].done)) {
-    for (let clue_coords of clue_cells) {
-      let clue = field[clue_coords[0]][clue_coords[1]];
+  while (!clue_cells.every(cell => cell.done)) {
+    for (let clue of clue_cells) {
       if (clue.done) continue;
 
       // check basic cases first
-      perform_basic_pass(clue, field);
+      perform_basic_pass(clue);
       if (clue.done) continue;
 
       // loop through the neighbor clues
-      for (let nei_clue_coords of clue.next_clue_coords) {
-        nei_clue_coords = nei_clue_coords.split(',');
-
-        let nei_clue = field[nei_clue_coords[0]][nei_clue_coords[1]];
+      for (let nearby_clue of clue.next_clues) {
 
         // determine overlapping cells
-        let overlapping = clue.cluster.filter(item => nei_clue.cluster.includes(item));
+        let overlapping = clue.cluster.filter(item => nearby_clue.cluster.includes(item));
 
-        // if overlapping cells account for all remaining flags, set non-overlapping cells in cluster to clear
-        if (clue.n_filled_needed === nei_clue.n_filled_needed && clue.cluster.length > overlapping.length && nei_clue.cluster.length === overlapping.length) {
+        // if overlapping cells account for all remaining fills, set non-overlapping cells in cluster to clear
+        if (clue.fills_needed === nearby_clue.fills_needed && clue.cluster.length > overlapping.length && nearby_clue.cluster.length === overlapping.length) {
           // obtain non-overlapping cells from active clue's cluster
           let cells_to_be_cleared = clue.cluster.filter(item => !overlapping.includes(item));
           // clear those cells, and remove them from nearby clusters
-          clear_cells_remove_from_clusters(cells_to_be_cleared, field);
+          clear_cells_remove_from_clusters(cells_to_be_cleared);
           continue;
         }
 
         let n_cluster_diff = clue.cluster.length - overlapping.length
-        if (n_cluster_diff === (clue.n_filled_needed - nei_clue.n_filled_needed) && n_cluster_diff > 0) {
-          // obtain non-overlapping cells from active clue
-          let cells_to_be_flagged = clue.cluster.filter(item => !overlapping.includes(item));
-          fill_cells_remove_from_clusters(cells_to_be_flagged, field);
+        if (n_cluster_diff === (clue.fills_needed - nearby_clue.fills_needed) && n_cluster_diff > 0) {
+          // obtain non-overlapping cells from active clue, and fill them
+          fill_cells_remove_from_clusters(clue.cluster.filter(item => !overlapping.includes(item)));
         }
       }
     }
@@ -251,64 +241,53 @@ function solve_mosaic_hard(field) {
 
 /**
  * Given the field and a clue, perform the basic checks:
- * 1. A clue that has been fully flagged, but is not yet marked done
- * 2. A clue whose remaining cluster size matches its number of missing flags
+ * 1. A clue that has been fully filled, but is not yet marked done
+ * 2. A clue whose remaining cluster size matches its number of missing fills
  * @param {Object} clue   clue object
- * @param {Array} field   puzzle field
  * @returns 
  */
-function perform_basic_pass(clue, field) {
+function perform_basic_pass(clue) {
   // if a clue is fully filled, set it to done
-  if (clue.n_filled_needed === 0) {
+  if (clue.fills_needed === 0) {
     // and clear any remaining cells in its cluster, and remove them from nearby clusters
-    if (clue.cluster.length > 0) clear_cells_remove_from_clusters(clue.cluster, field);
+    if (clue.cluster.length > 0) clear_cells_remove_from_clusters(clue.cluster);
     clue.done = true;
     return;
   }
 
   // if remaining number of filled-cells == remaining cluster and > 0, set cluster to filled-cells
-  if (clue.n_filled_needed === clue.cluster.length && clue.n_filled_needed > 0) {
-    fill_cells_remove_from_clusters(clue.cluster, field);
+  if (clue.fills_needed === clue.cluster.length && clue.fills_needed > 0) {
+    fill_cells_remove_from_clusters(clue.cluster);
     clue.done = true;
   }
 }
 
 /**
- * 
- * @param {Array} cells_to_be_cleared   array of coordinates of cells to be filled
- * @param {Array} field                 puzzle field
+ * Clear each cell in the given array, and remove them from the clusters of adjacent clues
+ * @param {Array} cells_to_be_cleared   array of cells to be filled
  */
-function clear_cells_remove_from_clusters(cells_to_be_cleared, field) {
-  for (let cell_coords_s of cells_to_be_cleared) {
-    let cell_coords = cell_coords_s.split(',')
-    let cell_ob = field[cell_coords[0]][cell_coords[1]];
-
-    cell_ob.clear = true;
+function clear_cells_remove_from_clusters(cells_to_be_cleared) {
+  for (let cell_to_be_cleared of cells_to_be_cleared) {
+    cell_to_be_cleared.clear = true;
     // now update the clusters of all nearby clues
-    for (let clue_coords of cell_ob.clues_in_range) {
-      clue_coords = clue_coords.split(',');
-      field[clue_coords[0]][clue_coords[1]].cluster = field[clue_coords[0]][clue_coords[1]].cluster.filter(item => item !== cell_coords_s);
-      // item => item.toString() !== cell_coords.toString()
+    for (let clue_cell of cell_to_be_cleared.clues_in_range) {
+      clue_cell.cluster = clue_cell.cluster.filter(cell => cell !== cell_to_be_cleared);
     }
   }
 }
 
 /**
- * 
- * @param {Array} cells_to_be_filled  array of coordinates of cells to be filled
- * @param {Array} field               puzzle field
+ * Fill each cell in the given array, and remove them from the clusters of adjacent clues
+ * @param {Array} cells_to_be_filled  array of cells to be filled
  */
-function fill_cells_remove_from_clusters(cells_to_be_filled, field) {
-  for (let cell_coords_s of cells_to_be_filled) {
-    let cell_coords = cell_coords_s.split(',');
-    let cell_ob = field[cell_coords[0]][cell_coords[1]];
+function fill_cells_remove_from_clusters(cells_to_be_filled) {
+  for (let cell_to_be_filled of cells_to_be_filled) {
     // set that cell to filled
-    cell_ob.filled = true;
+    cell_to_be_filled.filled = true;
     // now update the clusters of all nearby clues and filled counts
-    for (let clue_coords of cell_ob.clues_in_range) {
-      clue_coords = clue_coords.split(',');
-      field[clue_coords[0]][clue_coords[1]].cluster = field[clue_coords[0]][clue_coords[1]].cluster.filter(item => item !== cell_coords_s);
-      field[clue_coords[0]][clue_coords[1]].n_filled_needed--;
+    for (let clue_cell of cell_to_be_filled.clues_in_range) {
+      clue_cell.cluster = clue_cell.cluster.filter(cell => cell !== cell_to_be_filled);
+      clue_cell.fills_needed--;
     }
   }
 }

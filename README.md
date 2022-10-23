@@ -29,7 +29,10 @@ Size  | Difficulty | Solve Time [s]
 
 www.puzzle-kakurasu.com/ (kakurasu.js)
 ---
-Currently only solves the 4x4 puzzles, because the base options list is static... 
+Successfully completes all puzzles modes. The solver-fn first generates a object of possibilities based on the size of the field, where each key is the row/column sum, and the coresponding value is a list of cell combinations that sum to the key. The initial list of options for each row/column is set by the possibilities-object and that row/column's given sum. The row/column options are repeatedly processed and filtered until each row/column has only 1 option remaining. A process/filter step consists of checking the following 2 conditions:
+
+- If all options for the current axis (row/column) contain a certain value, then the cell corresponding to that value is filled and the cross axis options that do not contain that value are filtered out.
+- If a certain value is missing from all options, then the cell corresponding to that value is cleared and the cross axis options that do contain it are filtered out.
 
 Size  | Difficulty | Solve Time [s]
 ------|------------|---------------
@@ -50,7 +53,34 @@ Size  | Difficulty | Solve Time [s]
 
 www.puzzle-minesweeper.com/minesweeper (minesweeper.js)
 ---
-Successfully solves all 'easy' minesweeper puzzles. The minesweeper puzzles on this site are unambiguous, in that all information necessary to solve them is presented to the user from the beginning.
+Successfully solves all minesweeper puzzles. The minesweeper puzzles on this site are unambiguous, in that all information necessary to solve them is presented to the user from the beginning, and there is never a reason to guess. The solver-fn uses a 2D array of objects to keep track of each cell's state. Clue cells have a list of references to the adjacent cells known as their cluster, as well as their given value. Unknown cells merely have booleans indicating whether it is cleared, flagged, or unset. The easy solver-fn simply performs a basic pass on each clue not set to 'done'. A basic pass consists of checking for one of the two following cases:
+
+- The clue requires no more flags, but is not yet marked done. If there are any cells remaining in its cluster, those should be cleared and removed.
+- The number of flags needed by the clue equals the size (number of elements) of its cluster. All cells in its cluster are then flagged.
+
+The hard solver-fn first expands each clue cell to include the set of clues that influence the cells that it influences (clues in a 5x5 window centered on the clue in question). The main solving loop loops through each incomplete clue, performing a basic pass, before comparing it to each of its 'clue-neighbors' and checking for either of the two following conditions:
+
+- If both clues require the same number of flags, the length of the active clue's cluster is greater than the number of overlapping cells, and the neighbor-clue's remaining cluster cells are the overlapping cells, then the clue's non-overlapping cells are cleared. In this example the center-right 2 is the active clue and the 1 to its left is the neighbor clue. The 1's flag will be the 2's final flag, thus the 2's remaining cluster cells (bottom-right) must be cleared.
+```
+┬───┬───┬───┬───┐             ┬───┬───┬───┬───┐
+| 1 | 0 | x | 1 |             | 1 | 0 | x | 1 |
+┼───┼───┼───┼───┤             ┼───┼───┼───┼───┤
+| x | 1 | 2 | F |     ──>     | x | 1 | 2 | F |
+┼───┼───┼───┼───┤             ┼───┼───┼───┼───┤
+| 2 |   |   |   |             | 2 |   |   | x |
+┼───┼───┼───┼───┤             ┼───┼───┼───┼───┤
+```
+- If the active clue's number of non-overlapping cells is equal to the active clue's number of flags needed minus the neighbor clue's number of flags needed and the number of non-overlapping cells is greater than 0, then the active clue's non-overlapping cells are flagged. In this example the active clue is the 2 on the right, and the neighbor clue is the 1. There can be at most 1 flag in the cells that the 2 and 1 share, thus the last cell of the 2's cluster (top-center) must be flagged.
+```
+┼───┼───┼───┤             ┼───┼───┼───┤
+|   |   | x |             |   | F | x |
+┼───┼───┼───┤             ┼───┼───┼───┤
+| 2 |   | 2 |     ──>     | 2 |   | 2 |
+┼───┼───┼───┤             ┼───┼───┼───┤
+|   | 1 |   |             |   | 1 |   |
+┴───┴───┴───┘             ┴───┴───┴───┘
+```
+This is repeated until the puzzle is solved.
 
 Size  | Difficulty | Solve Time [s]
 ------|------------|---------------
@@ -69,7 +99,7 @@ Size  | Difficulty | Solve Time [s]
 
 www.puzzle-minesweeper.com/mosaic (mosaic.js)
 ---
-Successfully solves all 'easy' mosaic puzzles.
+Successfully solves all mosaic puzzles. Mosiac is quite similar to minesweeper, the main difference being that all cells, including clues, can be set or cleared. As such, the solver-fn setup is a little different than Minesweeper's, but all solving is basically the same.
 
 Size  | Difficulty | Solve Time [s]
 ------|------------|---------------
@@ -92,7 +122,19 @@ www.puzzle-nonograms.com (nonograms.js)
 
 www.puzzle-skyscrapers.com (skyscrapers.js)
 ---
-Basically only a stub. 
+Sucessfully solves the 'easy' and 'normal' game modes. *Sometimes* solves the 4x4 'hard' puzzles. The solver-fn creates a list of possible value permutations [1-N] and copies it for each row/column. Each of these lists of options is filtered by the corresponding edge clues. Next, pre-filled cells are taken into account, and used to filter the row/column options. Each cell contains a list of possible values that is also filtered by the remaining row/column options for that cell. The process of filtering the row/column options based on their cells is repeated until each row/column only has 1 option. This process works for the 'easy' and 'normal' difficulty game modes, but not for the 'hard' ones.
+
+Size  | Difficulty | Solve Time [s]
+------|------------|---------------
+4x4   | Easy       | 0.575
+4x4   | Normal     | 0.349
+4x4   | Hard       | 0.474
+5x5   | Easy       | 0.538
+5x5   | Normal     | 0.586
+5x5   | Hard       | ??
+6x6   | Easy       | 0.574
+6x6   | Normal     | 0.591
+6x6   | Hard       | ??
 
 www.puzzle-tents.com (tents.js)
 ---
