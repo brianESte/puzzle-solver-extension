@@ -35,10 +35,50 @@ function waitForElm(selector) {
   });
 }
 
+/**
+ * Plays minesweeper
+ */
 function play_game() {
   var game_mode = document.URL.substring(47);
   let btn_Done = document.getElementById("btnReady");
   if (btn_Done === null || document.getElementsByClassName("err").length) {
+    let local_store = browser.storage.local.get({"solver_state": {active: false, solves_remaining: 0}});
+    local_store.then(resolve => {
+      // if solver is not active, return without starting a new puzzle
+      let solver_state = JSON.parse(resolve["solver_state"]);
+      if(!solver_state.active)  return;
+
+      // check the cookie for "game_records"
+      let cookie_bits = document.cookie.split("; ");
+      let game_records = cookie_bits.findLast(entry => entry.startsWith("game_records="))?.split("=")[1];
+      if(!game_records) return;
+      // otherwise parse the info from the string
+      game_records = JSON.parse(game_records);
+      // now get current game type from url
+      let game_type = document.URL.slice(0, -1).split("/")[3].split('-');
+      game_type.shift();
+      game_type = game_type.join(' ');
+      var active_entry = game_records.find(entry => entry["puzzle_type"] == game_type);
+      let [minutes, seconds] = document.getElementsByClassName("succ")[0].innerText.substring(47).split(':');
+      let time_ms = 1000 * (60 * parseInt(minutes) + parseFloat(seconds));
+      let n_solves = active_entry["n_solves"];
+      active_entry["avg_time"] = (active_entry["avg_time"] * n_solves + time_ms) / (n_solves + 1);
+      active_entry["n_solves"]++;
+      // document.cookie = "game_records=" + JSON.stringify(game_records) + "; expires=";
+      set_cookie("game_records", JSON.stringify(game_records), 7);
+
+      // decrement the number of solves remaining
+      solver_state.solves_remaining--;
+      // if there are more solves remaining, continue
+      if(solver_state.solves_remaining > 0){
+        document.getElementById("btnNew").click()
+      } else {
+        solver_state.active = true;
+      }
+      // update solver_state for next iteration
+      browser.storage.local.set({"solver_state": JSON.stringify(solver_state)});
+    });
+    /*
     game_mode = game_mode.replace('/', '');
     // retrieve the previous solve times
     var solve_time_obj = JSON.parse(sessionStorage.getItem("solve_times"));
@@ -78,6 +118,7 @@ function play_game() {
     } else {
       // setTimeout(() => document.getElementById("btnNew").click(), 500);
     }
+    */
     return;
   }
   // diabling the timer is only superficial. 
@@ -342,6 +383,11 @@ function flag_cells_remove_from_clusters(cells_to_be_flagged) {
   }
 }
 
+/**
+ * Prints the game field to the console
+ * @param {Array} field game field as a 2D array
+ * @param {String} info additional logging / debugging information
+ */
 function print_field(field, info=null){
   if(info != null)  console.log(info);
 
@@ -364,4 +410,25 @@ function test_ms_hard(){
   var field = solve_minesweeper_hard(field_init);
   print_field(field);
   console.log(field);
+}
+
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if(request["start"])  document.getElementById("btnNew").click();
+});
+
+/**
+ * Helper function to set the browser cookie.
+ * Adapted from: https://www.quirksmode.org/js/cookies.html
+ * @param {*} name  name parameter of cookie
+ * @param {*} value content to be stored in cookie
+ * @param {*} days  number of days for the cookie to exist (set expiration date)
+ */
+function set_cookie(name, value, days) {
+  var expires = "";
+  if (days) {
+    var date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "") + expires + "; path=/";
 }

@@ -1,0 +1,44 @@
+html,
+body {
+  width: 360px;
+}
+
+.center { text-align: center;  }
+
+input[type="checkbox"] {  display: none;  }
+.toggle-button input[type="checkbox"]+.toggle-text {
+  display: inline-block;
+  width: 50%;
+  margin: 5px auto;
+  padding: 5px 10px;
+  background-color: rgb(0, 158, 105);
+  border: 1.5px #ababab solid;
+  border-radius: 100px;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+.toggle-button input[type="checkbox"] + .toggle-text::before { content: "START";  }
+.toggle-button input[type="checkbox"]:checked + .toggle-text::before{  content: "STOP";  }
+.toggle-button input[type="checkbox"]:checked + .toggle-text {  background-color: rgb(223, 33, 33); }
+
+input[type="number"] {
+  width: 4ch;
+  appearance: textfield;
+}
+
+.hidden { display: none;  }
+
+.button {
+  margin: 3% auto;
+  padding: 4px;
+  text-align: center;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  text-align: center;
+  background-color: chartreuse;
+}

@@ -1,4 +1,6 @@
-A Chromium extension that automatically solves some puzzle games. The status of each site/game is listed below. The manifest may need to be modified / ammended slightly to work with other browsers, but the code should transfer without issue; unless you are using an absurdly old browser version. 
+A browser extension that automatically solves certain puzzle games. The status of each site/game is listed below. The manifest will likely need to be modified / ammended slightly to work with other browsers, but the code should transfer without issue; unless you are using an absurdly old browser version.
+
+*** Pop-up has only been tested on Firefox. There may be issues with other browsers
 
 To use this browser extension, download the code. Then follow the browser specific instructions below:
 
@@ -10,6 +12,9 @@ Firefox: First set the "manifest_version" number according to Mozilla's [current
 
 www.puzzle-binairo.com/ (binairo.js)
 ---
+
+## www.puzzle-binairo.com/ (binairo.js)
+
 Successfully completes all 'easy' puzzles.
 
 Size  | Difficulty | Solve Time [s]
@@ -27,8 +32,8 @@ Size  | Difficulty | Solve Time [s]
 
 ---
 
-www.puzzle-kakurasu.com/ (kakurasu.js)
----
+## www.puzzle-kakurasu.com/ (kakurasu.js)
+
 Successfully completes all puzzles modes. The solver-fn first generates a object of possibilities based on the size of the field, where each key is the row/column sum, and the coresponding value is a list of cell combinations that sum to the key. The initial list of options for each row/column is set by the possibilities-object and that row/column's given sum. The row/column options are repeatedly processed and filtered until each row/column has only 1 option remaining. A process/filter step consists of checking the following 2 conditions:
 
 - If all options for the current axis (row/column) contain a certain value, then the cell corresponding to that value is filled and the cross axis options that do not contain that value are filtered out.
@@ -51,8 +56,8 @@ Size  | Difficulty | Solve Time [s]
 
 ---
 
-www.puzzle-minesweeper.com/minesweeper (minesweeper.js)
----
+## www.puzzle-minesweeper.com/minesweeper (minesweeper.js)
+
 Successfully solves all minesweeper puzzles. The minesweeper puzzles on this site are unambiguous, in that all information necessary to solve them is presented to the user from the beginning, and there is never a reason to guess. The solver-fn uses a 2D array of objects to keep track of each cell's state. Clue cells have a list of references to the adjacent cells known as their cluster, as well as their given value. Unknown cells merely have booleans indicating whether it is cleared, flagged, or unset. The easy solver-fn simply performs a basic pass on each clue not set to 'done'. A basic pass consists of checking for one of the two following cases:
 
 - The clue requires no more flags, but is not yet marked done. If there are any cells remaining in its cluster, those should be cleared and removed.
@@ -97,8 +102,8 @@ Size  | Difficulty | Solve Time [s]
 
 ---
 
-www.puzzle-minesweeper.com/mosaic (mosaic.js)
----
+## www.puzzle-minesweeper.com/mosaic (mosaic.js)
+
 Successfully solves all mosaic puzzles. Mosiac is quite similar to minesweeper, the main difference being that all cells, including clues, can be set or cleared. As such, the solver-fn setup is a little different than Minesweeper's, but all solving is basically the same.
 
 Size  | Difficulty | Solve Time [s]
@@ -116,12 +121,12 @@ Size  | Difficulty | Solve Time [s]
 
 ---
 
-www.puzzle-nonograms.com (nonograms.js)
----
+## www.puzzle-nonograms.com (nonograms.js)
+
 (usually) works for 5x5. All other game styles / sizes are untested. Sometimes goes into a loop of solving incompletely and clicking the done button... When it works, solve-time is usually sub 0.8 s. Which could probably be better.
 
-www.puzzle-skyscrapers.com (skyscrapers.js)
----
+## www.puzzle-skyscrapers.com (skyscrapers.js)
+
 Sucessfully solves the 'easy' and 'normal' game modes. *Sometimes* solves the 4x4 'hard' puzzles. The solver-fn creates a list of possible value permutations [1-N] and copies it for each row/column. Each of these lists of options is filtered by the corresponding edge clues. Next, pre-filled cells are taken into account, and used to filter the row/column options. Each cell contains a list of possible values that is also filtered by the remaining row/column options for that cell. The process of filtering the row/column options based on their cells is repeated until each row/column only has 1 option. This process works for the 'easy' and 'normal' difficulty game modes, but not for the 'hard' ones.
 
 Size  | Difficulty | Solve Time [s]
@@ -136,6 +141,8 @@ Size  | Difficulty | Solve Time [s]
 6x6   | Normal     | 0.591
 6x6   | Hard       | ??
 
-www.puzzle-tents.com (tents.js)
 ---
+
+## www.puzzle-tents.com (tents.js)
+
 Currently a stub.

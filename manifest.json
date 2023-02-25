@@ -1,8 +1,23 @@
 {
-	"manifest_version": 3,
+	"manifest_version": 2,
 	"name": "Game Solver",
 	"description": "solve a puzzle game automatically",
 	"version": "0.1",
+	"homepage_url": "https://github.com/brianESte/puzzle-solver-extension",
+	"permissions": [
+    "tabs",
+		"cookies",
+		"<all-urls>",
+		"storage"
+  ],
+	"icons": {
+		"48": "icons/beasts-48.png"
+	},
+	"browser_action": {
+		"default_icon": "icons/beasts-32.png",
+		"default_title": "Puzzle Solver",
+		"default_popup": "popup/popup.html"
+	},
 	"content_scripts": [
 		{"matches": [ "https://www.puzzle-binairo.com/*"], "js": ["binairo.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-kakurasu.com/*"], "js": ["kakurasu.js"], "run_at": "document_start"},

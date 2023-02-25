@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="popup.css" />
+    <!-- <script id="jquery-loader"></script> -->
+  </head>
+  <body>
+    <div id="non-game-content"><p class="center">
+      No solved puzzle found in active tab
+    </p></div>
+    <div id="popup-content" class="hidden">
+      <div class="center">
+        <label class="toggle-button">
+          <input type="checkbox" id="toggle-solver">
+          <div class="toggle-text"> SOLVER</div>
+          <!--div class="slider-oval">
+            <div class="slider-dot"></div>
+          </div-->
+        </label>
+        <!-- <button id="btn-run">Start automated solver</button> -->
+        <input id="n_solve_ctr" type="number" value="20"/>
+        <span>times</span>
+      </div>
+      <!--button>Clear saved times for current game mode</button>
+      <button>Clear saved times for current puzzle</button-->
+      <!--div class="button beast">Frog</div>
+      <div class="button beast">Turtle</div>
+      <div class="button beast">Snake</div>
+      <div class="button reset">Reset</div-->
+      <table id="record-table">
+        <thead>
+          <tr><th>Game Mode</th><th>Avg Solve Time [s]</th><th># Solves</th></tr>
+        </thead>
+        <tbody>
+          <!-- <tr><td>5x5 Easy</td><td>--:--:--</td><td>0</td></tr> -->
+        </tbody>
+      </table>
+    </div>
+    <!-- <div class="hidden">
+      <p>Error occured?</p>
+      <p>Try a different page.</p>
+    </div> -->
+    <script src="popup.js"></script>
+  </body>
+</html>
