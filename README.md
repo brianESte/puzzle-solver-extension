@@ -10,7 +10,21 @@ Firefox: First set the "manifest_version" number according to Mozilla's [current
 
 ---
 
-www.puzzle-binairo.com/ (binairo.js)
+## www.puzzle-battleships.com/ (battleships.js)
+
+merely a stub
+
+Size  | Difficulty | Solve Time [s]
+------|------------|---------------
+6x6   | Easy       | ??
+6x6   | Hard       | ??
+8x8   | Easy       | ??
+8x8   | Hard       | ??
+10x10 | Easy       | ??
+10x10 | Hard       | ??
+15x15 | Easy       | ??
+15x15 | Hard       | ??
+
 ---
 
 ## www.puzzle-binairo.com/ (binairo.js)
