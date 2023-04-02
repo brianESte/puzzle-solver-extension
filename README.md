@@ -137,7 +137,17 @@ Size  | Difficulty | Solve Time [s]
 
 ## www.puzzle-nonograms.com (nonograms.js)
 
-(usually) works for 5x5. All other game styles / sizes are untested. Sometimes goes into a loop of solving incompletely and clicking the done button... When it works, solve-time is usually sub 0.8 s. Which could probably be better.
+The solver works, and has been test on puzzle sizes 5x5, 10x10, and 15x15, and _should_ work for the remaining sizes, but seems to lag out. This is likely due to the recursion during setup or the potentially large number of arrays used to represent all possibilities for each row / column. Approximate solve-times are shown below, and could probably be better. The current methodology is to generate for each row and column all possible mark/clear permutations, and progressively eliminate them until the field is filled. This is arguably a very naive approach. Future versions will likely attempt to skip sparse lines until more information is gather from intersecting lines.
+
+Size  | Solve Time [s]
+------|---------------
+5x5   | 0.71
+10x10 | 0.92
+15x15 | 6.90
+20x20 | ??
+25x25 | ??
+
+---
 
 ## www.puzzle-skyscrapers.com (skyscrapers.js)
 

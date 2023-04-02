@@ -7,7 +7,6 @@
 	"permissions": [
     "tabs",
 		"cookies",
-		"<all-urls>",
 		"storage"
   ],
 	"icons": {
@@ -23,7 +22,7 @@
 		{"matches": [ "https://www.puzzle-kakurasu.com/*"], "js": ["kakurasu.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-minesweeper.com/minesweeper*/"], "js": ["minesweeper.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-minesweeper.com/mosaic-*/"], "js": ["mosaic.js"], "run_at": "document_start"},
-		{"matches": [ "https://www.puzzle-nonograms.com/*", "https://nonogramsonline.com/*" ], "js": ["nonograms.js"]},
+		{"matches": [ "https://www.puzzle-nonograms.com/*"], "js": ["nonograms.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-skyscrapers.com/*"], "js": ["skyscrapers.js"], "run_at": "document_start"}
 	]
 }

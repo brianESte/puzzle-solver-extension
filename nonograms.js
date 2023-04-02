@@ -1,98 +1,421 @@
-// exports.NAME = "Nonogram";
+// nonograms.js
 // designed to work on the page: https://www.puzzle-nonograms.com/
-// assume nonogram is 5x5. Will make it flexible later
 
-// TODO: examine possible shortcuts using existing array methods
-function play_game(){
-    let btn_Done = document.getElementById("btnReady");
-    if(btn_Done === null || document.getElementsByClassName("err").length)  return;
-    // console.log(btn_Done);
-    // diabling the timer is only superficial. 
-    // var stop_tmr = document.getElementsByName("stopClock")[0];
-    // stop_tmr.value = 1;
-    // set robot to true
-    // document.getElementById("robot").value = 1;
-    
-    var [h_cts, v_cts] = game_from_page();
-    var field = solve_nonogram_bw(h_cts, v_cts);
-    enter_solved_nonogram(field);
-    
-    btn_Done.dispatchEvent(clickEvent);
-    console.log(field);
+// "https://nonogramsonline.com/*" 
+
+document.addEventListener("DOMContentLoaded", () => {
+	// wait for the board to be ready
+	waitForElm(".nonograms-cell-back").then((elm) => {
+		// console.log(elm.textContent);
+		play_game();
+	});
+});
+
+// Credit to Yong Wang (https://stackoverflow.com/a/61511955) for the base of this function
+function waitForElm(selector) {
+	return new Promise(resolve => {
+		if (document.querySelector(selector)) {
+			return resolve(document.querySelector(selector));
+		}
+
+		// Create an observer instance linked to the callback function
+		const observer = new MutationObserver(mutations => {
+			mutations.forEach(mutation => {
+				mutation.addedNodes.forEach(node => {
+					if (node.nodeType != 1) return;
+					// if the node matches the selector, resolve the promise and return from callback
+					if (node.matches(selector)) {
+						resolve(document.querySelector(selector));
+						observer.disconnect();
+						return;
+					}
+				})
+			});
+		});
+
+		observer.observe(document.body, { childList: true, subtree: true });
+	});
+}
+
+// task queue
+var kyu = [];
+
+/**
+ * Play a game of nonograms
+ */
+function play_game() {
+	let btn_Done = document.getElementById("btnReady");
+	if (btn_Done === null || document.getElementsByClassName("err").length) return;
+	// diabling the timer is only superficial. 
+	// var stop_tmr = document.getElementsByName("stopClock")[0];
+	// stop_tmr.value = 1;
+
+	let tasks_left = document.getElementById("taskLeft").children;
+	let tasks_top = document.getElementById("taskTop").children;
+	// let h_cts = counts_from_groups(document.getElementById("taskLeft").children);
+	// let v_cts = counts_from_groups(document.getElementById("taskTop").children);
+	let h_opts = gen_line_obs(tasks_top.length, tasks_left);
+	let v_opts = gen_line_obs(tasks_left.length, tasks_top);
+
+	const H = h_opts.length;
+	const W = v_opts.length;
+
+	var field = new Array(H);
+	for (let r_i = 0; r_i < H; r_i++) {
+		field[r_i] = new Array(W);
+		field[r_i].fill(0);
+	}
+	// console.log(h_opts);
+	// console.log(v_opts);
+	solve_nonogram(field, h_opts, v_opts);
+	enter_solved_nonogram(field);
+
+	// set robot to true
+	document.getElementById("robot").value = 1;
+	btn_Done.click();
 }
 
 /**
- * Objective is to obtain the horizontal and vertical counts as 2D arrays
+ * Obtain the row/column counts from the DOM
+ * @param {Array-like} groups DOM objects that indicate the row/col groups
+ * @returns h_cts/v_cts
  */
-function game_from_page(){
-    // var h_ct_grps = $("#taskLeft .task-group");
-    var h_ct_grps = document.getElementById("taskLeft").children;
-    var h_cts = counts_from_groups(h_ct_grps);
+function counts_from_groups(groups) {
+	const W = groups.length;
 
-    // var v_ct_grps = $("#taskTop .task-group");
-    var v_ct_grps = document.getElementById("taskTop").children;
-    var v_cts = counts_from_groups(v_ct_grps);
+	var counts = new Array(W);
+	// var ct_depth = groups[0].childNodes.length;
+	// for (let i = 0; i < W; i++) {
+	// 	counts[i] = new Array(ct_depth);
+	// 	for (let j = 0; j < ct_depth; j++) {
+	// 		counts[i][j] = parseInt(groups[i].childNodes[j].innerText);
+	// 	}
+	// }
+	for (let i = 0; i < W; i++) {
+		counts[i] = Array.from(groups[i].childNodes)
+			.map(node => parseInt(node.innerText))
+			.filter(val => !isNaN(val));
+	}
 
-    return [h_cts, v_cts];
+	return counts;
 }
 
-function counts_from_groups(groups){
-    const W = groups.length;
+/**
+ * Generate an array of option-arrays for the given set of rows/columns
+ * @param {Number} cross_len dimension normal to the processed dimension
+ * @param {Array} groups array of mark-groups along the given line
+ * @returns an array of option-arrays for each row/column
+ */
+function gen_line_obs(cross_len, groups) {
+	const n = groups.length;
 
-    var counts = new Array(W);
-    var ct_depth = groups[0].childNodes.length;
-    for( let i = 0; i < W; i++){
-        counts[i] = new Array(ct_depth);
-        for( let j = 0; j < ct_depth; j++){
-            counts[i][j] = parseInt(groups[i].childNodes[j].innerText);
-        }
-    }
-
-    return counts;
+	var line_obs = new Array(n);
+	for (let i = 0; i < n; i++) {
+		line_obs[i] = [];
+		gen_opts(cross_len, line_obs[i],
+			Array.from(groups[i].childNodes)
+				.map(node => parseInt(node.innerText))
+				.filter(val => !isNaN(val)));
+	}
+	return line_obs;
 }
 
-function solve_nonogram_bw(h_cts, v_cts){
-    const H = h_cts.length;
-    const W = v_cts.length;
+/**
+ * Solve a nonogram puzzle
+ * @param {Array} field 2D array representing the game field
+ * @param {Array} h_opts array of option-arrays, one for each row
+ * @param {Array} v_opts array of option-arrays, one for each column
+ */
+function solve_nonogram(field, h_opts, v_opts) {
+	const H = h_opts.length;
+	const W = v_opts.length;
 
-    var field = new Array(H);
-    for (let r_i = 0; r_i < H; r_i++){
-        field[r_i] = new Array(W);
-        field[r_i].fill(0);
-    }
+	// start with a pass on each set of row/column options
+	for (let r_i = 0; r_i < H; r_i++) {
+		process_row_opts(field, h_opts, v_opts, r_i);
+	}
+	for (let c_i = 0; c_i < W; c_i++) {
+		process_col_opts(field, h_opts, v_opts, c_i);
+	}
+	// process kyu until empty
+	while (kyu.length > 0) {
+		kyu.shift()();
+	}
+	// console.log("kyu empty");
+	// console.log(field);
+	return;
 
-    var iter_ctr = 0;
-    // start by looping through the initial h_cts/v_cts
-    process_rows_basic(h_cts, field);
+	field = transpose(field);
+	process_rows_basic(v_cts, field);
+	field = transpose(field);
 
-    field = transpose(field);
-    process_rows_basic(v_cts, field);
-    field = transpose(field);
+	while (field.flat().includes(0) && iter_ctr < 5) {
+		process_rows_regex(h_cts, field);
 
-    while(field.flat().includes(0) && iter_ctr < 5){
-        process_rows_regex(h_cts, field);
-
-        field = transpose(field);
-        process_rows_regex(v_cts, field);
-        field = transpose(field);
-        iter_ctr++;
-    }
-
-    // console.log(field);
-
-    return field;
+		field = transpose(field);
+		process_rows_regex(v_cts, field);
+		field = transpose(field);
+		iter_ctr++;
+	}
 }
 
-function nj_empty_2d(shape){
-    const H = shape[0];
-    const W = shape[1];
+function process_row_opts(field, h_opts, v_opts, r_i) {
+	const W = v_opts.length;
+	let row_complete = true;
+	for (let i = 0; i < W; i++) {
+		if (field[r_i][i] === 0) row_complete = false;
+	}
+	if (row_complete) return;
 
-    var varray = new Array(H);
+	let line_opts = h_opts[r_i];
+	const n_opts = line_opts.length;
+	for (let col_i = 0; col_i < W; col_i++) {
+		let cell_val = line_opts[0][col_i];
+		for (let opt_i = 1; opt_i < n_opts; opt_i++) {
+			if (cell_val != line_opts[opt_i][col_i]) {
+				cell_val = 0;
+				break;
+			}
+		}
+		if (cell_val === 0) continue;
 
-    for(let r_i = 0; r_i < H; r_i++){
-        varray[r_i] = new Array(W);
-    }
-    return varray;
+		field[r_i][col_i] = parseInt(cell_val);
+		// now filter v_opts for col_i
+		v_opts[col_i] = v_opts[col_i].filter(opt => opt[r_i] == cell_val);
+		kyu.push(() => process_col_opts(field, h_opts, v_opts, col_i));
+	}
+}
+
+function process_col_opts(field, h_opts, v_opts, c_i) {
+	const H = h_opts.length;
+	let col_complete = true;
+	for (let i = 0; i < H; i++) {
+		if (field[i][c_i] === 0) col_complete = false;
+	}
+	if (col_complete) return;
+
+	let line_opts = v_opts[c_i];
+	const n_opts = line_opts.length;
+	for (let row_i = 0; row_i < H; row_i++) {
+		let cell_val = line_opts[0][row_i];
+		for (let opt_i = 1; opt_i < n_opts; opt_i++) {
+			if (cell_val != line_opts[opt_i][row_i]) {
+				cell_val = 0;
+				break;
+			}
+		}
+		if (cell_val === 0) continue;
+
+		field[row_i][c_i] = parseInt(cell_val);
+		// now filter h_opts for row_i
+		h_opts[row_i] = h_opts[row_i].filter(opt => opt[c_i] == cell_val);
+		kyu.push(() => process_row_opts(field, h_opts, v_opts, row_i));
+	}
+}
+
+/*
+function process_row(field, h_cts, v_cts, line_i) {
+	let regex_str = "(?<!2)([01]*?)";
+	// for (let i = 1; i < h_cts[r_i].n_tents_total; i++) regex_str += "[014]+?([02])";
+	for (let count of h_cts[line_i]) regex_str += `([02]{${count}})([01]+?)`;
+	regex_str = regex_str.slice(0, -3) + "*?)(?!2)";
+	// let line_string = field[r_i].map(el => get_cell_value(el)).join('');
+	let line_string = field[line_i].reduce((acc, el) => acc + el, "");
+	if (line_string.indexOf(0) === -1) return;
+	console.log(`Processing row ${line_i}: ${line_string} with regex ${regex_str}`);
+
+	let mark_spot_opts = [];
+	let clear_spot_opts = [];
+	for (let i = h_cts[line_i].length + 1; i >= 0; i--) {
+		regex_line(regex_str, line_string, mark_spot_opts, clear_spot_opts);
+		regex_str = remove_qmark(regex_str);
+	}
+	console.log(mark_spot_opts, clear_spot_opts);
+
+	// const W = v_cts.length;
+	let mark_spots = mark_spot_opts.reduce((acc, opt) => acc & opt);
+	let clear_spots = clear_spot_opts.reduce((acc, opt) => acc & opt);
+	console.log(`&(|) of mark spots: ${mark_spots}, and clear spots ${clear_spots}`);
+	// const H = h_cts.length;
+	// return;
+
+	let cell_i = -1;
+	let mask_limit = Math.max(mark_spots, clear_spots);
+	for (let mask = 1; mask <= mask_limit; mask <<= 1) {
+		cell_i++;
+
+		if (mark_spots & mask && field[line_i][cell_i] !== 2) {
+			// if (field[line_i][cell_i] === 2) continue;
+			field[line_i][cell_i] = 2;
+			kyu.push(() => process_col(field, h_cts, v_cts, line_i, cell_i));
+			console.log(`process_row() -> just marked cell (${line_i}, ${cell_i}), will process col ${cell_i}`);
+			// continue;
+		}
+	}
+	cell_i = -1;
+	for (let mask = 1; mask <= mask_limit; mask <<= 1) {
+		cell_i++;
+
+		if ((clear_spots & mask) && field[line_i][cell_i] !== 1) {
+			//  && ((cell_i-1 >= 0 && field[line_i][cell_i-1] !== 0) || (cell_i+1 < v_cts.length && field[line_i][cell_i+1] !== 0))) {
+			// if (field[line_i][cell_i] === 1) return;
+			field[line_i][cell_i] = 1;
+			kyu.push(() => process_col(field, h_cts, v_cts, cell_i));
+			console.log(`process_row() -> just cleared cell (${line_i}, ${cell_i}), will process col ${cell_i}`);
+		}
+	}
+}
+//*/
+
+/*
+function process_col(field, h_cts, v_cts, line_i) {
+	let regex_str = "(?<!2)([01]*?)";
+	// for (let i = 1; i < h_cts[r_i].n_tents_total; i++) regex_str += "[014]+?([02])";
+	for (let count of v_cts[line_i]) regex_str += `([02]{${count}})([01]+?)`;
+	regex_str = regex_str.slice(0, -3) + "*?)(?!2)";
+	// let line_string = field[r_i].map(el => get_cell_value(el)).join('');
+	let line_string = field.reduce((acc, el) => acc + el[line_i], "");
+	if (line_string.indexOf(0) === -1) return;
+	console.log(`Processing col ${line_i}: ${line_string} with regex ${regex_str}`);
+
+	let mark_spot_opts = [];
+	let clear_spot_opts = [];
+	for (let i = v_cts[line_i].length + 1; i >= 0; i--) {
+		regex_line(regex_str, line_string, mark_spot_opts, clear_spot_opts);
+		regex_str = remove_qmark(regex_str);
+	}
+	// console.log(mark_spot_opts, clear_spot_opts);
+
+	// const W = v_cts.length;
+	let mark_spots = mark_spot_opts.reduce((acc, opt) => acc & opt);
+	let clear_spots = clear_spot_opts.reduce((acc, opt) => acc & opt);
+	console.log(`&(|) of mark spots: ${mark_spots}, and clear spots ${clear_spots}`);
+
+	let cell_i = -1;
+	let mask_limit = Math.max(mark_spots, clear_spots);
+	for (let mask = 1; mask <= mask_limit; mask <<= 1) {
+		cell_i++;
+
+		if (mark_spots & mask && field[cell_i][line_i] !== 2) {
+			// kyu.push(() => fill_cell(field, h_cts, v_cts, r_i, cell_i));
+			// if (field[cell_i][line_i] === 2) continue;
+			field[cell_i][line_i] = 2;
+			kyu.push(() => process_row(field, h_cts, v_cts, cell_i));
+			console.log(`process_col() -> just marked cell (${cell_i}, ${line_i}), will process row ${cell_i}`);
+			// continue;
+		}
+	}
+	cell_i = -1;
+	for (let mask = 1; mask <= mask_limit; mask <<= 1) {
+		cell_i++;
+
+		if ((clear_spots & mask) && field[cell_i][line_i] !== 1 &&
+			((cell_i - 1 >= 0 && field[cell_i - 1][line_i] !== 0) || (cell_i + 1 < h_cts.length && field[cell_i + 1][line_i] !== 0))) {
+			// if (field[cell_i][line_i] === 1) return;
+			field[cell_i][line_i] = 1;
+			console.log(`process_col() -> just cleared cell (${cell_i}, ${line_i}), will process row ${cell_i}`);
+			kyu.push(() => process_row(field, h_cts, v_cts, cell_i));
+		}
+	}
+}
+//*/
+
+/*
+function regex_line(regex_str, line_string, mark_spot_opts, clear_spot_opts) {
+	let matches = line_string.match(new RegExp(regex_str, 'd'));
+	let matched_mark_spots = 0;
+	let matched_clear_spots = 0;
+	let match_indices = matches.indices;
+	match_indices.shift();
+	// console.log(`match indices for line string ${line_string}: ${match_indices}`);
+	for (let ii = match_indices.length - 1; ii >= 0; ii--) {
+		let [ind_start, ind_end] = match_indices[ii];
+		if (ii % 2 !== 0) {
+			matched_mark_spots |= (((1 << (ind_end - ind_start)) - 1) << ind_start);
+		} else {
+			if (ind_start !== ind_end) {
+				// matched_clear_spots |= (1 << ind_start);
+				matched_clear_spots |= (((1 << (ind_end - ind_start)) - 1) << ind_start);
+			}
+		}
+	}
+
+	mark_spot_opts.push(matched_mark_spots);
+	clear_spot_opts.push(matched_clear_spots);
+}
+//*/
+
+/*
+function remove_qmark(str) {
+	for (let i = str.length - 6; i > 0; i--) {
+		if (str[i] == '?') {
+			return str.slice(0, i) + str.slice(i + 1);
+		}
+	}
+	return str;
+}
+//*/
+
+/*
+function nj_empty_2d(shape) {
+	const H = shape[0];
+	const W = shape[1];
+
+	var varray = new Array(H);
+
+	for (let r_i = 0; r_i < H; r_i++) {
+		varray[r_i] = new Array(W);
+	}
+	return varray;
+}
+//*/
+
+/*
+function calc_n_opts(width, groups){
+	if(groups.length === 1){
+		return width + 1 - groups[0];
+	}
+	
+	var p_ct = 0;
+	let max_start = width + 1 - groups.reduce((acc, curr) => acc + curr + 1, -1);
+	// console.log(`calc_n_opts(${width}, ${groups}), max start = ${max_start}`);
+
+	for(let i = 0; i < max_start; i++){
+		p_ct += calc_n_opts(width - (groups[0] + 1 + i), groups.slice(1));
+	}
+
+	return p_ct;
+}
+//*/
+
+function gen_opts(width, opts, groups) {
+	if (width === (groups.reduce((acc, el) => acc + el + 1, 0) - 1)) {
+		opts.push(groups.reduce((acc, el) => acc + '2'.repeat(el) + 1, "").slice(0, -1));
+		return;
+	}
+	// add a 1 (clear)
+	gen_opts_rec(width, opts, groups, '1');
+	// add the next group (mark)
+	gen_opts_rec(width, opts, groups.slice(1), '2'.repeat(groups[0]) + '1');
+}
+
+function gen_opts_rec(width, opts, groups, base_str) {
+	// console.log(`gen_opts_rec(${width}, opts, ${groups}, ${base_str})`);
+	if (groups.length === 0) {
+		base_str += '1'.repeat(width - base_str.length);
+		opts.push(base_str);
+		return;
+	}
+	if (width - base_str.length === (groups.reduce((acc, el) => acc + el + 1, 0) - 1)) {
+		base_str = base_str.slice(0, -1);
+		for (const group of groups) base_str += '1' + '2'.repeat(group);
+		opts.push(base_str);
+		return;
+	}
+	// add a 1 (clear)
+	gen_opts_rec(width, opts, groups, base_str + '1');
+	// add the next group (mark)
+	gen_opts_rec(width, opts, groups.slice(1), base_str + '2'.repeat(groups[0]) + '1');
 }
 
 function process_rows_basic(h_cts, field){
@@ -130,8 +453,8 @@ function process_rows_basic(h_cts, field){
     }
 }
 
-function process_rows_regex(h_cts, field){
-    const H = field.length;
+function process_rows_regex(h_cts, field) {
+	const H = field.length;
 
     for( let r_i = 0; r_i < H; r_i++){
         // if there are no unset cells (0s), skip the row
@@ -258,118 +581,38 @@ function test_nonogram(){
 }
 
 /**
- * 
- * @param {*} field_solved  2d array of a solved nonogram puzzle
- * @param {*} cells         list of cells to be set/unset. should be same length as H*W of field
+ * Enter a solved nonogram into the webpage
+ * @param {Array} field_solved  2D array of a solved nonogram puzzle
  */
-function enter_solved_nonogram(field_solved){
-    // console.log(field_solved);
-    // get field dimensions:
-    const H = field_solved.length;
-    const W = field_solved[0].length;
+function enter_solved_nonogram(field_solved) {
+	// get field dimensions:
+	const H = field_solved.length;
+	const W = field_solved[0].length;
 
-    // first get game element:
-    const game_brd = document.getElementsByClassName("nonograms-cell-back")[0];
-    var game_box = game_brd.getBoundingClientRect();
-    const delta_x = (game_box.width - 4) / W;
-    const delta_y = (game_box.height - 4) / H;
-    
-    // var cells = document.getElementsByClassName("cell selectable");
-    // var game_field = Game.currentState.cellStatus;
+	// get game element:
+	const game_brd = document.getElementsByClassName("nonograms-cell-back")[0];
+	var game_box = game_brd.getBoundingClientRect();
+	const delta_x = (game_box.width - 4) / W;
+	const delta_y = (game_box.height - 4) / H;
 
-    for( let r_i = 0; r_i < H; r_i++){
-        for( let c_i = 0; c_i < W; c_i++){
-            if( field_solved[r_i][c_i] == 2){
-                let evt_opts = {
-                    bubbles: true,
-                    // cancelable: false,
-                    clientX: game_box.x + delta_x/2 + c_i*delta_x,
-                    clientY: game_box.y + (r_i + 0.5) * delta_y,
-                    // pointerType: "mouse",
-                    // view: window,
-                }
-    
-                game_brd.dispatchEvent(new MouseEvent("mousedown", evt_opts));
-                game_brd.dispatchEvent(new MouseEvent("mouseup", evt_opts));
-            }
-        }
-    }
+	// var cells = document.getElementsByClassName("cell selectable");
+	// var game_field = Game.currentState.cellStatus;
+
+	for (let r_i = 0; r_i < H; r_i++) {
+		for (let c_i = 0; c_i < W; c_i++) {
+			if (field_solved[r_i][c_i] == 2) {
+				let evt_opts = {
+					bubbles: true,
+					// cancelable: false,
+					clientX: game_box.x + (c_i + 0.5) * delta_x,
+					clientY: game_box.y + (r_i + 0.5) * delta_y,
+					// pointerType: "mouse",
+					// view: window,
+				}
+
+				game_brd.dispatchEvent(new MouseEvent("mousedown", evt_opts));
+				game_brd.dispatchEvent(new MouseEvent("mouseup", evt_opts));
+			}
+		}
+	}
 }
-
-function new_puzzle(){
-    document.getElementById("btnNew").dispatchEvent(clickEvent);
-}
-
-// see uievent docs
-var clickEvent = new MouseEvent("click", {
-    "bubbles": true,
-    "cancelable": false,
-    clientX: 800,   // 1000
-    clientY: 364,   // 650,
-    "view": window
-});
-
-function point_on_pos(x, y){
-    return new PointerEvent("click", {
-        bubbles:    true,
-        cancelable: true,
-        clientX: x,
-        clientY: y,
-        composed: true,
-        pointerType: "mouse",
-        view: window
-    })
-}
-
-var pointEvent = new PointerEvent("click", {
-    bubbles:    true,
-    cancelable: true,
-    clientX: 800,
-    clientY: 364,
-    composed: true,
-    // detail: 1,              // (read-only)?
-    // layerX, layerY       (read-only)
-    // pointerId: 1,
-    pointerType: "mouse",
-    // screenX, screenY     (read-only)
-    // sourceCapabilities?  (read-only)
-
-    // isTrusted: true,     (read-only)
-    view: window
-});
-
-function click_zz(){
-    const game_brd = document.getElementsByClassName("nonograms-cell-back")[0];
-    var game_box = game_brd.getBoundingClientRect();
-    const delta_x = (game_box.width - 4) / 5;
-    const delta_y = (game_box.height - 4) / 5;
-    
-    // console.log();
-    for(let i = 0; i < 5; i++){
-        for(let j = 0; j < 5; j++){
-            let evt_opts = {
-                bubbles: true,
-                // cancelable: false,
-                clientX: game_box.x + delta_x/2 + i*delta_x,
-                clientY: game_box.y + (j + 0.5) * delta_y,
-                // pointerType: "mouse",
-                // view: window,
-            }
-
-            game_brd.dispatchEvent(new MouseEvent("mousedown", evt_opts));
-            game_brd.dispatchEvent(new MouseEvent("mouseup", evt_opts));
-        }
-    }
-}
-
-// function printMousePos(event) {
-//     console.log("printMousePos");
-//     // document.body.textContent = "clientX: " + event.clientX + " - clientY: " + event.clientY;
-//     console.log("clientX: " + event.clientX + " - clientY: " + event.clientY);
-//     console.log(event);
-// }
-
-// document.addEventListener("click", printMousePos);
-
-test_nonogram();
-// play_game();
