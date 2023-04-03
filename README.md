@@ -169,4 +169,25 @@ Size  | Difficulty | Solve Time [s]
 
 ## www.puzzle-tents.com (tents.js)
 
-Currently a stub.
+Successfully solves all easy puzzles, and generally solves the hard ones. The algorithm uses a task queue to control the work flow. The possible tasks are:
+- process_row(): check a given row for clearable cells and tent-able cells.
+  - If the number of tents remaining is equal to the number of unset cells remaining, those can all be set to tents.
+  - If there are no tents remaining, but unset cells remain, those can all be set to clear.
+  - If neither of the 2 previous conditions is met, a regex is performed on the row to search for tent-able and clearable cells.
+- process_col(): same as process_row(), but applied to a column.
+- clear_cell(): clear a given cell.
+- pitch_tent(): set a cell to tent.
+- check_tent(): check if a tent cell can be assigned to a tree.
+
+The tasks add more tasks to the queue as needed. Once the queue is empty the field is checked for completion. The solve times shown below are only estimates. The 15x15 hard puzzles have a ~50% chance of failure.
+
+Size  | Difficulty | Solve Time [s]
+------|------------|---------------
+6x6   | Easy       | 0.6
+6x6   | Hard       | 0.76
+8x8   | Easy       | 0.79
+8x8   | Hard       | 0.86
+10x10 | Easy       | 1.2
+10x10 | Hard       | 1.2
+15x15 | Easy       | 1.8
+15x15 | Hard       | 1.8*
