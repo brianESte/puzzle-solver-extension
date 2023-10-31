@@ -1,4 +1,10 @@
-A browser extension that automatically solves certain puzzle games. The status of each site/game is listed below. The manifest will likely need to be modified / ammended slightly to work with other browsers, but the code should transfer without issue; unless you are using an absurdly old browser version.
+A browser extension that automatically solves certain puzzle games. The status of each site/game is listed below. 
+
+## Setup
+
+Different browsers have different requirements for the various parameters in the manifest file. To facilitate cross-browser testing, as well as setup, browser-specific manifest files are available. To use the extension, either create a symlink to the manifest file corresponding to the browser of your choice, or rename it to `manifest.json`.
+
+The manifest will likely need to be modified / ammended slightly to work with other browsers, but the code should transfer without issue; unless you are using an absurdly old browser version.
 
 *** Pop-up has only been tested on Firefox. There may be issues with other browsers
 

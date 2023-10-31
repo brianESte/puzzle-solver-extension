@@ -1,0 +1,24 @@
+{
+	"manifest_version": 3,
+	"name": "Game Solver",
+	"description": "solve a puzzle game automatically",
+	"version": "0.1",
+	"homepage_url": "https://github.com/brianESte/puzzle-solver-extension",
+	"permissions": [
+    "tabs",
+		"cookies",
+		"storage"
+  ],
+	"icons": {
+		"48": "icons/beasts-48.png"
+	},
+	"content_scripts": [
+		{"matches": [ "https://www.puzzle-binairo.com/*" ], "js": ["binairo.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-kakurasu.com/*" ], "js": ["kakurasu.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-minesweeper.com/minesweeper*/" ], "js": ["minesweeper.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-minesweeper.com/mosaic-*/" ], "js": ["mosaic.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-nonograms.com/*", "https://nonogramsonline.com/*" ], "js": ["nonograms.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-skyscrapers.com/*" ], "js": ["skyscrapers.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-tents.com/*" ], "js": ["tents.js"], "run_at": "document_start"}
+	]
+}
