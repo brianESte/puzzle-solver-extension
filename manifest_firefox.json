@@ -24,6 +24,7 @@
 		{"matches": [ "https://www.puzzle-minesweeper.com/mosaic-*/" ], "js": ["mosaic.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-nonograms.com/*", "https://nonogramsonline.com/*" ], "js": ["nonograms.js"], "run_at": "document_start"},
 		{"matches": [ "https://www.puzzle-skyscrapers.com/*" ], "js": ["skyscrapers.js"], "run_at": "document_start"},
-		{"matches": [ "https://www.puzzle-tents.com/*" ], "js": ["tents.js"], "run_at": "document_start"}
+		{"matches": [ "https://www.puzzle-tents.com/*" ], "js": ["tents.js"], "run_at": "document_start"},
+		{"matches": [ "https://www.puzzle-thermometers.com/*" ], "js": ["thermometers.js"], "run_at": "document_start"}
 	]
 }

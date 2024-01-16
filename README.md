@@ -197,3 +197,25 @@ Size  | Difficulty | Solve Time [s]
 10x10 | Hard       | 1.2
 15x15 | Easy       | 1.8
 15x15 | Hard       | 1.8*
+
+## www.puzzle-thermometers.com (thermometers.js)
+
+Sucessfully solves all puzzles that have been tested so far. Main features are a comprehensive `grid` object that contains the grid cells both via row access and via column access. This structure allowed the functionality of a process_row() and process_column() to be combined, without needing to transpose the grid inbetween operations. For control of workflow a task queue is used. Tasks are the following:
+- `process_line()`: check a given line (row/column) for clearable and settable cells. Combines the would-be functionality of a process_row() and process_col(). 
+  - If the number of fills remaining equals the number of unset cells, those cells are filled.
+  - If the number of filled cells equals the line fill count, the remaining cells are cleared.
+  - Cells are cleared based on the longest thermometer section in the line and the line fill count.
+  - Cells are filled based on the longest thermometer section in the line, the line fill count, and the number of unset cells in the line.
+- `clear_cell()`: clear a given cell. `clear_cell()` tasks added by this function are added at the beginning of the queue to avoid interfering with `process_line()`.
+- `fill_cell()`: fill a given cell. `fill_cell()` tasks added by this function are added at the beginning of the queue to avoid interfering with `process_line()`.
+
+Size  | Type       | Solve Time [s]
+------|------------|---------------
+4x4   | Normal     | ??
+4x4   | Curved     | ??
+6x6   | Normal     | ??
+6x6   | Curved     | ??
+10x10 | Normal     | ??
+10x10 | Curved     | ??
+15x15 | Normal     | ??
+15x15 | Curved     | ??
