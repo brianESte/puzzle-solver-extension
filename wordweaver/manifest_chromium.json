@@ -1,0 +1,17 @@
+{
+	"manifest_version": 3,
+	"name": "Wordweaver Solver",
+	"description": "Aids in solving Wordweaver game",
+	"version": "0.0",
+	"homepage_url": "https://github.com/brianESte/puzzle-solver-extension/wordweaver/",
+	"content_scripts": [
+		{"matches": [ "https://www.weavergame.org/*", "https://weavergame.org/" ], "js": ["wordweaver.js"], "run_at": "document_start"}
+	],
+	"permissions": [
+		"scripting",
+		"activeTab"
+  ],
+	"web_accessible_resources": [
+		{"resources": ["data/word_graph.json"], "matches": [ "https://www.weavergame.org/*", "https://weavergame.org/*" ]}
+	]
+}

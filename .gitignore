@@ -1,3 +1,6 @@
 # notes files
 *notes*
 *planning*
+
+manifest.json
+# manifest.json is expected to be a symlink, and should be ignored
