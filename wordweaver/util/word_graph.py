@@ -14,7 +14,7 @@ $ python3 word_graph.py p[lot] <word_graph> [n_src_nodes=200]
     -> Plot a given word graph
 $ python3 word_graph.py r[emove] <word_graph> <word to be removed>
     -> Remove a given word from the graph
-$ python3 word_graph.py s[hortest] <word_graph> <source word> <target word>
+$ python3 word_graph.py s[hortest] <word_graph> <source word> <target word> [words to exclude]
     -> Determine the shortest distance from the source to target words""")
 
 
@@ -96,9 +96,16 @@ def remove_word_from_graph(word_graph_fp, removal_target):
         json.dump(dict_list, text_file)
 
 
-def shortest_path(word_graph_fp, src_node, target_node):
+def shortest_path(word_graph_fp, src_node, target_node, excluded_words=None):
     word_net = nx.Graph()
     load_word_graph(word_graph_fp, word_net)
+    # need to remove the excluded words from the word_net
+    if excluded_words is not None:
+        for ex_word in excluded_words:
+            try:
+                word_net.remove_node(ex_word.upper())
+            except nx.exception.NetworkXError:
+                print(f"Node {ex_word} not found in word_graph. Check your spelling?")
     path = nx.shortest_path(word_net, source=src_node.upper(), target=target_node.upper())
     print(path)
 
@@ -126,7 +133,10 @@ def main():
         if len(sys.argv) < 5:
             print("shortest path query requires 3 arguments!")
             sys.exit(5)
-        shortest_path(sys.argv[2], sys.argv[3], sys.argv[4])
+        if len(sys.argv) == 5:
+            shortest_path(sys.argv[2], sys.argv[3], sys.argv[4])
+        else:
+            shortest_path(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5:])
 
     print("word_graph.py complete")
 
