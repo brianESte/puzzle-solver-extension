@@ -99,15 +99,19 @@ async function load_word_graph(file_name) {
 	//console.log(url);
 	return fetch(url).then(response => response.json())
 		.then(adj_list_array => {
-			//console.log(typeof(data));
 			var word_graph = new WordGraph();
-			//adj_list_array = adj_list_array.slice(0, 100);
 
 			for (let word_obj of adj_list_array) {
 				word_graph.add_node(word_obj["word"], word_obj["adjs"].map(idx => { let word_ob = adj_list_array[idx]; if (word_ob) return word_ob["word"]}));
 			}
 			return word_graph;
 	});
+}
+
+async function load_word_list(file_name) {
+	const url = chrome.runtime.getURL(`data/${file_name}`);
+	return fetch(url).then(response => response.text())
+		.then(data => data.split('\n'));
 }
 
 function enter_words(word_path) {
@@ -161,10 +165,7 @@ function clear_board() {
 
 // function to solve the word-weaver puzzle
 async function solve() {
-	var excluded_words = ["BING", "BLAD", "BUAT", "CALS", "CAUM", "COLL", "DEEK", "DESI",
-		"ERES", "ETEN", "FOUD", "FOUS", "FUST", "KISH", "HELE",
-		"PONT", "REAK", "RONG", "ROOS", "SYEN", "TAKS", "TANA", "TEER", "YESK"];
-	// console.log("solve starting!");
+	var excluded_words = await load_word_list("excluded_words.txt");
 	// reset board, if not already clear
 	clear_board();
 	// load word graph from file

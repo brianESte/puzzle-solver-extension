@@ -9,7 +9,7 @@ LATE
 ```
 
 ## Function
-It uses a list of all english 4 letter words, builds a graph/network from those words with connections between words that differ by only one letter. Dijkstra's algorithm is used to find a shortest path from the given starting word and target word, while ignoring / avoiding the words that were included in "all english 4 letter words" but are not accepted by the site. It works, but could possibly be faster, with a more intelligent algorithm...
+It uses a list of all english 4 letter words, builds a graph/network from those words with connections between words that differ by only one letter. Dijkstra's algorithm is used to find a shortest path from the given starting word and target word, while ignoring / avoiding the words that were included in "all english 4 letter words" but are not accepted by the site. `data/excluded_words.txt` contains a list of words that are _not_ accepted by the site. That list is loaded, and those nodes are ignored during solving. These are only the words that are known to be invalid according to the site. There are likely others. The program / algorithm works, but could possibly be faster, with a more intelligent algorithm...?
 
 ## Utilities
 Utility programs / scripts are found in `util/`.

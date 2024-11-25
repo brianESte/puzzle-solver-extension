@@ -12,6 +12,7 @@
 		"activeTab"
   ],
 	"web_accessible_resources": [
-		{"resources": ["data/word_graph.json"], "matches": [ "https://www.weavergame.org/*", "https://weavergame.org/*" ]}
+		{"resources": ["data/word_graph.json"], "matches": [ "https://www.weavergame.org/*", "https://weavergame.org/*" ]},
+		{"resources": ["data/excluded_words.txt"], "matches": [ "https://www.weavergame.org/*", "https://weavergame.org/*" ]}
 	]
 }
